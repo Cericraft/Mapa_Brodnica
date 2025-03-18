@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Mapa załadowana poprawnie!');
             
+            // Pobieranie i wyświetlanie wszystkich zabytków z bazy danych
+            loadPlacesFromDatabase();
+            
             // Dodanie obsługi kliknięcia na mapę dla zalogowanych użytkowników
             map.on('click', function(e) {
                 if (isUserLoggedIn) {
@@ -40,6 +43,65 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.error('Nie znaleziono elementu mapy!');
         }
+    }
+    
+    // Funkcja pobierająca miejsca z bazy danych
+    function loadPlacesFromDatabase() {
+        fetch('get_places.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Wyczyść istniejące markery
+                    clearMarkers();
+                    
+                    // Dodaj markery dla wszystkich miejsc
+                    data.data.forEach(place => {
+                        addMarkerToMap(place);
+                    });
+                } else {
+                    showNotification('Błąd podczas pobierania miejsc: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Błąd pobierania danych:', error);
+                showNotification('Błąd połączenia z serwerem', 'error');
+            });
+    }
+    
+    // Funkcja dodająca marker na mapie z danymi z bazy
+    function addMarkerToMap(place) {
+        if (map) {
+            const lat = parseFloat(place.szerokosc);
+            const lng = parseFloat(place.dlugosc);
+            
+            if (!isNaN(lat) && !isNaN(lng)) {
+                // Tworzenie zawartości popup z obrazem
+                let popupContent = `<strong>${place.nazwa}</strong>`;
+                
+                if (place.opis) {
+                    popupContent += `<p>${place.opis}</p>`;
+                }
+                
+                // Dodanie zdjęcia do popup jeśli istnieje
+                if (place.zdjecie) {
+                    popupContent += `<img src="${place.zdjecie}" alt="${place.nazwa}" style="width:100%; max-width:200px; margin-top:10px;">`;
+                }
+                
+                const marker = L.marker([lat, lng])
+                    .addTo(map)
+                    .bindPopup(popupContent);
+                
+                markers.push(marker);
+            }
+        }
+    }
+    
+    // Funkcja czyszcząca wszystkie markery z mapy
+    function clearMarkers() {
+        markers.forEach(marker => {
+            map.removeLayer(marker);
+        });
+        markers = [];
     }
     
     // Obsługa nawigacji między zakładkami
@@ -200,14 +262,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 const email = document.getElementById('login-email').value;
                 const password = document.getElementById('login-password').value;
                 
-                // W tej wersji symulujemy udane logowanie
-                showNotification('Zalogowano pomyślnie!', 'success');
+                // Tworzymy obiekt FormData
+                const formData = new FormData();
+                formData.append('email', email);
+                formData.append('password', password);
                 
-                // Aktualizujemy status użytkownika
-                isUserLoggedIn = true;
-                
-                // Aktualizujemy interfejs dla zalogowanego użytkownika
-                updateUIForLoggedInUser(email);
+                // Wysyłamy żądanie logowania
+                fetch('login.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showNotification('Zalogowano pomyślnie!', 'success');
+                        
+                        // Aktualizujemy status użytkownika
+                        isUserLoggedIn = true;
+                        
+                        // Aktualizujemy interfejs dla zalogowanego użytkownika
+                        updateUIForLoggedInUser(data.email);
+                    } else {
+                        showNotification(data.message || 'Błąd logowania', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Błąd:', error);
+                    showNotification('Błąd połączenia z serwerem', 'error');
+                });
             });
         }
     }
@@ -230,16 +312,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                // W tej wersji symulujemy udaną rejestrację
-                showNotification('Konto zostało utworzone pomyślnie!', 'success');
+                // Tworzymy obiekt FormData
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('email', email);
+                formData.append('password', password);
                 
-                // Czyścimy formularz rejestracji
-                registerForm.reset();
-                
-                // Przełączamy na zakładkę logowania
-                setTimeout(() => {
-                    document.querySelector('.auth-tab-btn[data-tab="login-form"]').click();
-                }, 1000);
+                // Wysyłamy żądanie rejestracji
+                fetch('register.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showNotification('Konto zostało utworzone pomyślnie!', 'success');
+                        
+                        // Czyścimy formularz rejestracji
+                        registerForm.reset();
+                        
+                        // Przełączamy na zakładkę logowania
+                        setTimeout(() => {
+                            document.querySelector('.auth-tab-btn[data-tab="login-form"]').click();
+                        }, 1000);
+                    } else {
+                        showNotification(data.message || 'Błąd rejestracji', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Błąd:', error);
+                    showNotification('Błąd połączenia z serwerem', 'error');
+                });
             });
         }
     }
@@ -251,25 +354,60 @@ document.addEventListener('DOMContentLoaded', function() {
             addPlaceForm.addEventListener('submit', function(event) {
                 event.preventDefault();
                 
+                if (!isUserLoggedIn) {
+                    showNotification('Musisz być zalogowany, aby dodać miejsce', 'error');
+                    return;
+                }
+                
                 const placeName = document.getElementById('place-name').value;
                 const placeDesc = document.getElementById('place-desc').value;
                 const placeLat = document.getElementById('place-lat').value;
                 const placeLng = document.getElementById('place-lng').value;
+                const placePhotos = document.getElementById('place-photos').files;
                 
-                // W tej wersji symulujemy udane dodanie miejsca
-                showNotification('Miejsce zostało dodane pomyślnie!', 'success');
+                // Tworzymy obiekt FormData
+                const formData = new FormData();
+                formData.append('name', placeName);
+                formData.append('description', placeDesc);
+                formData.append('latitude', placeLat);
+                formData.append('longitude', placeLng);
                 
-                // Dodajemy nowy marker na mapie
-                if (map && placeLat && placeLng) {
-                    const marker = L.marker([placeLat, placeLng])
-                        .addTo(map)
-                        .bindPopup(`<strong>${placeName}</strong><br>${placeDesc}`);
-                    
-                    markers.push(marker);
+                // Dodajemy zdjęcia (jeśli istnieją)
+                if (placePhotos.length > 0) {
+                    for (let i = 0; i < placePhotos.length; i++) {
+                        formData.append('photos[]', placePhotos[i]);
+                    }
                 }
                 
-                // Czyścimy formularz
-                addPlaceForm.reset();
+                // Wysyłamy żądanie dodania miejsca
+                fetch('add_place.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showNotification('Miejsce zostało dodane pomyślnie!', 'success');
+                        
+                        // Odświeżamy miejsca na mapie
+                        loadPlacesFromDatabase();
+                        
+                        // Czyścimy formularz
+                        addPlaceForm.reset();
+                        
+                        // Przełączamy na zakładkę mapy
+                        const mapaMenuItem = document.querySelector('.menu-item[data-target="mapa-container"]');
+                        if (mapaMenuItem) {
+                            mapaMenuItem.click();
+                        }
+                    } else {
+                        showNotification(data.message || 'Błąd dodawania miejsca', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Błąd:', error);
+                    showNotification('Błąd połączenia z serwerem', 'error');
+                });
             });
         }
     }
@@ -279,16 +417,52 @@ document.addEventListener('DOMContentLoaded', function() {
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function() {
-                // Symulujemy udane wylogowanie
-                showNotification('Wylogowano pomyślnie!', 'success');
-                
-                // Aktualizujemy status użytkownika
-                isUserLoggedIn = false;
-                
-                // Aktualizujemy interfejs dla wylogowanego użytkownika
-                updateUIForLoggedOutUser();
+                // Wysyłamy żądanie wylogowania
+                fetch('logout.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showNotification('Wylogowano pomyślnie!', 'success');
+                        
+                        // Aktualizujemy status użytkownika
+                        isUserLoggedIn = false;
+                        
+                        // Aktualizujemy interfejs dla wylogowanego użytkownika
+                        updateUIForLoggedOutUser();
+                    } else {
+                        showNotification(data.message || 'Błąd wylogowania', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Błąd:', error);
+                    showNotification('Błąd połączenia z serwerem', 'error');
+                    
+                    // Na wypadek problemów z serwerem, i tak wylogowujemy użytkownika lokalnie
+                    isUserLoggedIn = false;
+                    updateUIForLoggedOutUser();
+                });
             });
         }
+    }
+    
+    // Sprawdzanie stanu sesji
+    function checkSession() {
+        fetch('check_session.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.logged_in) {
+                isUserLoggedIn = true;
+                updateUIForLoggedInUser(data.email);
+            } else {
+                isUserLoggedIn = false;
+                updateUIForLoggedOutUser();
+            }
+        })
+        .catch(error => {
+            console.error('Błąd sprawdzania sesji:', error);
+            isUserLoggedIn = false;
+            updateUIForLoggedOutUser();
+        });
     }
     
     // Aktualizacja interfejsu dla zalogowanego użytkownika
@@ -319,6 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const userProfile = document.getElementById('user-profile');
         if (userProfile) {
             userProfile.style.display = 'block';
+            userProfile.classList.add('active');
             
             const profileUsername = document.getElementById('profile-username');
             if (profileUsername) {
@@ -355,6 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const userProfile = document.getElementById('user-profile');
         if (userProfile) {
             userProfile.style.display = 'none';
+            userProfile.classList.remove('active');
         }
         
         document.querySelectorAll('.auth-form').forEach(form => {
@@ -389,6 +565,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Konfiguracja przycisku wylogowania
         setupLogoutButton();
+        
+        // Sprawdzanie stanu sesji użytkownika
+        checkSession();
     }
     
     // Wywołanie funkcji inicjalizującej
