@@ -1,11 +1,11 @@
 <?php
-require 'db.php';
-session_start();
-
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
-}
-
-echo "Witaj w panelu użytkownika";
-?>
+ require 'db.php';
+ session_start();
+ 
+ if (!isset($_SESSION['user_id'])) {
+     header('Location: login.php');
+     exit;
+ }
+ 
+ echo "Witaj w panelu użytkownika";
+ ?>

@@ -1,184 +1,171 @@
 <!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa Brodnicy</title>
-    <link rel="stylesheet" href="Css.css">
-    <!-- Dodanie biblioteki Leaflet CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-</head>
-<body>
-    <header>Mapa Zabytków Brodnicy</header>
-    <main>
-        <section id="menu">
-            <a href="#" class="menu-item" data-target="mapa-container">MAPA</a>
-            <a href="#" class="menu-item" data-target="dodaj-container">DODAJ</a>
-            <a href="#" class="menu-item" data-target="instrukcja-container">INSTRUKCJA</a>
-            <a href="#" class="menu-item" data-target="wstep-container">WSTĘP</a>
-            <a href="#" class="menu-item" data-target="logowanie-container">LOGOWANIE</a>
-        </section>
-        <section id="content">
-            <!-- Sekcja Mapa -->
-            <div id="mapa-container" class="content-section active">
-                <div id="map"></div>
-                <div id="user-status" class="user-status-bar">
-                    <span>Nie jesteś zalogowany</span>
-                </div>
-            </div>
-            
-            <!-- Sekcja Dodaj -->
-            <div id="dodaj-container" class="content-section">
-                <h2>Dodaj miejsce na mapie</h2>
-                <div id="login-required-message" class="login-alert">
-                    <p>Aby dodać miejsce na mapie, musisz się najpierw zalogować.</p>
-                    <button id="goto-login-btn">Przejdź do logowania</button>
-                </div>
-                <form id="add-place-form" style="display: none;">
-                    <div class="form-group">
-                        <label for="place-name">Nazwa miejsca:</label>
-                        <input type="text" id="place-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="place-desc">Opis:</label>
-                        <textarea id="place-desc" rows="4"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="place-lat">Szerokość geograficzna:</label>
-                        <input type="number" id="place-lat" step="0.000001" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="place-lng">Długość geograficzna:</label>
-                        <input type="number" id="place-lng" step="0.000001" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="place-photos">Dodaj zdjęcia:</label>
-                        <input type="file" id="place-photos" multiple accept="image/*">
-                    </div>
-                    <button type="submit">Dodaj do mapy</button>
-                </form>
-                <div class="helper-text">
-                    <p>Wskazówka: Możesz znaleźć współrzędne klikając prawym przyciskiem myszy na mapie Google i wybierając "Co tu jest?"</p>
-                </div>
-            </div>
-            
-            <!-- Sekcja Instrukcja -->
-            <div id="instrukcja-container" class="content-section">
-                <h2>Instrukcja</h2>
-                <p>Witaj w aplikacji Mapa Zabytków Brodnicy! Oto krótka instrukcja obsługi:</p>
-                
-                <h3>Przeglądanie mapy</h3>
-                <p>W zakładce "MAPA" możesz przeglądać wszystkie dodane zabytki. Kliknij na marker, aby zobaczyć szczegółowe informacje o danym miejscu.</p>
-                
-                <h3>Dodawanie nowych miejsc</h3>
-                <p>Aby dodać nowe miejsce na mapie:</p>
-                <ol>
-                    <li>Zaloguj się do swojego konta</li>
-                    <li>Przejdź do zakładki "DODAJ"</li>
-                    <li>Wypełnij wszystkie wymagane pola formularza</li>
-                    <li>Kliknij przycisk "Dodaj do mapy"</li>
-                </ol>
-                
-                <h3>Twoje konto</h3>
-                <p>W zakładce "LOGOWANIE" możesz:</p>
-                <ul>
-                    <li>Zalogować się do istniejącego konta</li>
-                    <li>Utworzyć nowe konto</li>
-                    <li>Przeglądać informacje o swoim profilu</li>
-                    <li>Wylogować się z systemu</li>
-                </ul>
-            </div>
-            
-            <!-- Sekcja Wstęp -->
-            <div id="wstep-container" class="content-section">
-                <h2>Wstęp do projektu</h2>
-                <p>Mapa Zabytków Brodnicy to interaktywna platforma, która pozwala mieszkańcom i turystom odkrywać historyczne miejsca w naszym mieście.</p>
-                
-                <p>Celem projektu jest:</p>
-                <ul>
-                    <li>Promowanie dziedzictwa kulturowego Brodnicy</li>
-                    <li>Umożliwienie mieszkańcom dzielenia się wiedzą o lokalnych zabytkach</li>
-                    <li>Stworzenie kompletnej bazy danych obiektów historycznych</li>
-                    <li>Wspieranie turystyki i edukacji historycznej</li>
-                </ul>
-                
-                <p>Każdy zarejestrowany użytkownik może dodawać nowe miejsca na mapie, podając ich opis, lokalizację i zdjęcia.</p>
-                
-                <p>Zapraszamy do współtworzenia tego projektu i odkrywania fascynującej historii naszego miasta!</p>
-            </div>
-            
-            <!-- Sekcja Logowanie -->
-            <div id="logowanie-container" class="content-section">
-                <div id="auth-tabs" class="auth-tabs">
-                    <button class="auth-tab-btn active" data-tab="login-form">Logowanie</button>
-                    <button class="auth-tab-btn" data-tab="register-form">Stwórz konto</button>
-                </div>
-                
-                <div id="login-form" class="auth-form active">
-                    <h2>Logowanie</h2>
-                    <form id="login-form-element">
-                        <div class="form-group">
-                            <label for="login-email">Email:</label>
-                            <input type="email" id="login-email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="login-password">Hasło:</label>
-                            <input type="password" id="login-password" required>
-                        </div>
-                        <button type="submit">Zaloguj się</button>
-                    </form>
-                </div>
-                
-                <div id="register-form" class="auth-form">
-                    <h2>Utwórz nowe konto</h2>
-                    <form id="register-form-element">
-                        <div class="form-group">
-                            <label for="register-username">Nazwa użytkownika:</label>
-                            <input type="text" id="register-username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-email">Email:</label>
-                            <input type="email" id="register-email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="register-password">Hasło:</label>
-                            <input type="password" id="register-password" required minlength="6">
-                        </div>
-                        <div class="form-group">
-                            <label for="register-password-confirm">Potwierdź hasło:</label>
-                            <input type="password" id="register-password-confirm" required minlength="6">
-                        </div>
-                        <button type="submit">Utwórz konto</button>
-                    </form>
-                </div>
-                
-                <div id="user-profile" class="auth-form" style="display: none;">
-                    <h2>Twój profil</h2>
-                    <div class="user-info">
-                        <p><strong>Nazwa użytkownika:</strong> <span id="profile-username"></span></p>
-                        <p><strong>Email:</strong> <span id="profile-email"></span></p>
-                        <p><strong>Rola:</strong> <span id="profile-role">Użytkownik</span></p>
-                    </div>
-                    <div class="user-stats">
-                        <p><strong>Dodane miejsca:</strong> <span id="profile-places-count">0</span></p>
-                    </div>
-                    <button id="logout-btn" class="danger-btn">Wyloguj się</button>
-                </div>
-            </div>
-        </section>
-    </main>
-    <!-- Dodanie biblioteki Leaflet JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-    <script src="script.js"></script>
-    <!-- Lightbox for fullscreen images -->
-<div id="lightbox" class="lightbox">
-    <div class="lightbox-content">
-        <button class="close-lightbox">&times;</button>
-        <img id="lightbox-image" class="lightbox-image" src="" alt="Enlarged Image">
-        <div class="lightbox-nav">
-            <button id="prev-image">&lt;</button>
-            <button id="next-image">&gt;</button>
-        </div>
-    </div>
-</div>
-</body>
+ <html lang="pl">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Mapa Brodnicy</title>
+     <link rel="stylesheet" href="Css.css">
+     <!-- Dodanie biblioteki Leaflet CSS -->
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+ </head>
+ <body>
+     <header>Mapa Zabytków Brodnicy</header>
+     <main>
+         <section id="menu">
+             <a href="#" class="menu-item" data-target="mapa-container">MAPA</a>
+             <a href="#" class="menu-item" data-target="dodaj-container">DODAJ</a>
+             <a href="#" class="menu-item" data-target="instrukcja-container">INSTRUKCJA</a>
+             <a href="#" class="menu-item" data-target="wstep-container">WSTĘP</a>
+             <a href="#" class="menu-item" data-target="logowanie-container">LOGOWANIE</a>
+         </section>
+         <section id="content">
+             <!-- Sekcja Mapa -->
+             <div id="mapa-container" class="content-section active">
+                 <div id="map"></div>
+                 <div id="user-status" class="user-status-bar">
+                     <span>Nie jesteś zalogowany</span>
+                 </div>
+             </div>
+             
+             <!-- Sekcja Dodaj -->
+             <div id="dodaj-container" class="content-section">
+                 <h2>Dodaj miejsce na mapie</h2>
+                 <div id="login-required-message" class="login-alert">
+                     <p>Aby dodać miejsce na mapie, musisz się najpierw zalogować.</p>
+                     <button id="goto-login-btn">Przejdź do logowania</button>
+                 </div>
+                 <form id="add-place-form" style="display: none;">
+                     <div class="form-group">
+                         <label for="place-name">Nazwa miejsca:</label>
+                         <input type="text" id="place-name" required>
+                     </div>
+                     <div class="form-group">
+                         <label for="place-desc">Opis:</label>
+                         <textarea id="place-desc" rows="4"></textarea>
+                     </div>
+                     <div class="form-group">
+                         <label for="place-lat">Szerokość geograficzna:</label>
+                         <input type="number" id="place-lat" step="0.000001" required>
+                     </div>
+                     <div class="form-group">
+                         <label for="place-lng">Długość geograficzna:</label>
+                         <input type="number" id="place-lng" step="0.000001" required>
+                     </div>
+                     <div class="form-group">
+                         <label for="place-photos">Dodaj zdjęcia:</label>
+                         <input type="file" id="place-photos" multiple accept="image/*">
+                     </div>
+                     <button type="submit">Dodaj do mapy</button>
+                 </form>
+                 <div class="helper-text">
+                     <p>Wskazówka: Możesz znaleźć współrzędne klikając prawym przyciskiem myszy na mapie Google i wybierając "Co tu jest?"</p>
+                 </div>
+             </div>
+             
+             <!-- Sekcja Instrukcja -->
+             <div id="instrukcja-container" class="content-section">
+                 <h2>Instrukcja</h2>
+                 <p>Witaj w aplikacji Mapa Zabytków Brodnicy! Oto krótka instrukcja obsługi:</p>
+                 
+                 <h3>Przeglądanie mapy</h3>
+                 <p>W zakładce "MAPA" możesz przeglądać wszystkie dodane zabytki. Kliknij na marker, aby zobaczyć szczegółowe informacje o danym miejscu.</p>
+                 
+                 <h3>Dodawanie nowych miejsc</h3>
+                 <p>Aby dodać nowe miejsce na mapie:</p>
+                 <ol>
+                     <li>Zaloguj się do swojego konta</li>
+                     <li>Przejdź do zakładki "DODAJ"</li>
+                     <li>Wypełnij wszystkie wymagane pola formularza</li>
+                     <li>Kliknij przycisk "Dodaj do mapy"</li>
+                 </ol>
+                 
+                 <h3>Twoje konto</h3>
+                 <p>W zakładce "LOGOWANIE" możesz:</p>
+                 <ul>
+                     <li>Zalogować się do istniejącego konta</li>
+                     <li>Utworzyć nowe konto</li>
+                     <li>Przeglądać informacje o swoim profilu</li>
+                     <li>Wylogować się z systemu</li>
+                 </ul>
+             </div>
+             
+             <!-- Sekcja Wstęp -->
+             <div id="wstep-container" class="content-section">
+                 <h2>Wstęp do projektu</h2>
+                 <p>Mapa Zabytków Brodnicy to interaktywna platforma, która pozwala mieszkańcom i turystom odkrywać historyczne miejsca w naszym mieście.</p>
+                 
+                 <p>Celem projektu jest:</p>
+                 <ul>
+                     <li>Promowanie dziedzictwa kulturowego Brodnicy</li>
+                     <li>Umożliwienie mieszkańcom dzielenia się wiedzą o lokalnych zabytkach</li>
+                     <li>Stworzenie kompletnej bazy danych obiektów historycznych</li>
+                     <li>Wspieranie turystyki i edukacji historycznej</li>
+                 </ul>
+                 
+                 <p>Każdy zarejestrowany użytkownik może dodawać nowe miejsca na mapie, podając ich opis, lokalizację i zdjęcia.</p>
+                 
+                 <p>Zapraszamy do współtworzenia tego projektu i odkrywania fascynującej historii naszego miasta!</p>
+             </div>
+             
+             <!-- Sekcja Logowanie -->
+             <div id="logowanie-container" class="content-section">
+                 <div id="auth-tabs" class="auth-tabs">
+                     <button class="auth-tab-btn active" data-tab="login-form">Logowanie</button>
+                     <button class="auth-tab-btn" data-tab="register-form">Stwórz konto</button>
+                 </div>
+                 
+                 <div id="login-form" class="auth-form active">
+                     <h2>Logowanie</h2>
+                     <form id="login-form-element">
+                         <div class="form-group">
+                             <label for="login-email">Email:</label>
+                             <input type="email" id="login-email" required>
+                         </div>
+                         <div class="form-group">
+                             <label for="login-password">Hasło:</label>
+                             <input type="password" id="login-password" required>
+                         </div>
+                         <button type="submit">Zaloguj się</button>
+                     </form>
+                 </div>
+                 
+                 <div id="register-form" class="auth-form">
+                     <h2>Utwórz nowe konto</h2>
+                     <form id="register-form-element">
+                         <div class="form-group">
+                             <label for="register-username">Nazwa użytkownika:</label>
+                             <input type="text" id="register-username" required>
+                         </div>
+                         <div class="form-group">
+                             <label for="register-email">Email:</label>
+                             <input type="email" id="register-email" required>
+                         </div>
+                         <div class="form-group">
+                             <label for="register-password">Hasło:</label>
+                             <input type="password" id="register-password" required minlength="6">
+                         </div>
+                         <div class="form-group">
+                             <label for="register-password-confirm">Potwierdź hasło:</label>
+                             <input type="password" id="register-password-confirm" required minlength="6">
+                         </div>
+                         <button type="submit">Utwórz konto</button>
+                     </form>
+                 </div>
+                 
+                 <div id="user-profile" class="auth-form" style="display: none;">
+                     <h2>Twój profil</h2>
+                     <div class="user-info">
+                         <p><strong>Nazwa użytkownika:</strong> <span id="profile-username"></span></p>
+                         <p><strong>Email:</strong> <span id="profile-email"></span></p>
+                         <p><strong>Rola:</strong> <span id="profile-role">Użytkownik</span></p>
+                     </div>
+                     <div class="user-stats">
+                         <p><strong>Dodane miejsca:</strong> <span id="profile-places-count">0</span></p>
+                     </div>
+                     <button id="logout-btn" class="danger-btn">Wyloguj się</button>
+                 </div>
+             </div>
+         </section>
+     </main>
+     <!-- Dodanie biblioteki Leaflet JS -->
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
