@@ -19,5 +19,12 @@ CREATE TABLE IF NOT EXISTS zabytki (
     data_dodania TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (dodane_przez) REFERENCES uzytkownicy(id)
 );
+CREATE TABLE IF NOT EXISTS zdjecia (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    zabytek_id INT NOT NULL,
+    sciezka VARCHAR(255) NOT NULL,
+    data_dodania TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (zabytek_id) REFERENCES zabytki(id) ON DELETE CASCADE
+);
 
 INSERT IGNORE INTO uzytkownicy (email, haslo, rola) VALUES ('admin@example.com', 'admin123', 'admin');

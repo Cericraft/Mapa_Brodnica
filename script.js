@@ -5,6 +5,79 @@ document.addEventListener('DOMContentLoaded', function() {
     var markers = [];
     var isUserLoggedIn = false;
     
+    // Dodajemy kontener dla podglądu pełnoekranowego
+    function createFullscreenContainer() {
+        const fullscreenContainer = document.createElement('div');
+        fullscreenContainer.id = 'fullscreen-image-container';
+        fullscreenContainer.style.display = 'none';
+        fullscreenContainer.style.position = 'fixed';
+        fullscreenContainer.style.top = '0';
+        fullscreenContainer.style.left = '0';
+        fullscreenContainer.style.width = '100%';
+        fullscreenContainer.style.height = '100%';
+        fullscreenContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+        fullscreenContainer.style.zIndex = '10000';
+        fullscreenContainer.style.justifyContent = 'center';
+        fullscreenContainer.style.alignItems = 'center';
+        fullscreenContainer.style.cursor = 'pointer';
+        
+        const fullscreenImage = document.createElement('img');
+        fullscreenImage.id = 'fullscreen-image';
+        fullscreenImage.style.maxWidth = '90%';
+        fullscreenImage.style.maxHeight = '90%';
+        fullscreenImage.style.objectFit = 'contain';
+        fullscreenImage.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3)';
+        
+        const closeButton = document.createElement('div');
+        closeButton.innerHTML = '&times;';
+        closeButton.style.position = 'absolute';
+        closeButton.style.top = '20px';
+        closeButton.style.right = '30px';
+        closeButton.style.fontSize = '40px';
+        closeButton.style.color = 'white';
+        closeButton.style.cursor = 'pointer';
+        
+        fullscreenContainer.appendChild(fullscreenImage);
+        fullscreenContainer.appendChild(closeButton);
+        document.body.appendChild(fullscreenContainer);
+        
+        // Dodajemy obsługę zamykania podglądu pełnoekranowego
+        fullscreenContainer.addEventListener('click', function() {
+            hideFullscreenImage();
+        });
+        
+        closeButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            hideFullscreenImage();
+        });
+    }
+    
+    // Funkcja pokazująca obraz w trybie pełnoekranowym
+    function showFullscreenImage(imageUrl) {
+        const container = document.getElementById('fullscreen-image-container');
+        const image = document.getElementById('fullscreen-image');
+        
+        if (container && image) {
+            image.src = imageUrl;
+            container.style.display = 'flex';
+            
+            // Blokujemy przewijanie strony gdy podgląd jest aktywny
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    // Funkcja ukrywająca obraz w trybie pełnoekranowym
+    function hideFullscreenImage() {
+        const container = document.getElementById('fullscreen-image-container');
+        
+        if (container) {
+            container.style.display = 'none';
+            
+            // Przywracamy możliwość przewijania strony
+            document.body.style.overflow = '';
+        }
+    }
+    
     // Inicjalizacja mapy
     function initMap() {
         var mapElement = document.getElementById('map');
@@ -82,14 +155,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     popupContent += `<p>${place.opis}</p>`;
                 }
                 
-                // Dodanie zdjęcia do popup jeśli istnieje
+                // Dodanie zdjęcia do popup jeśli istnieje z możliwością powiększenia
                 if (place.zdjecie) {
-                    popupContent += `<img src="${place.zdjecie}" alt="${place.nazwa}" style="width:100%; max-width:200px; margin-top:10px;">`;
+                    popupContent += `<img src="${place.zdjecie}" alt="${place.nazwa}" style="width:100%; max-width:200px; margin-top:10px; cursor:pointer;" class="popup-image" data-full-img="${place.zdjecie}">`;
+                    popupContent += `<div style="text-align:center; margin-top:5px; font-size:12px; color:#666;">Kliknij zdjęcie, aby powiększyć</div>`;
                 }
                 
                 const marker = L.marker([lat, lng])
                     .addTo(map)
                     .bindPopup(popupContent);
+                
+                // Dodajemy nasłuchiwanie na zdarzenie otwarcia popup
+                marker.on('popupopen', function() {
+                    const popupImages = document.querySelectorAll('.popup-image');
+                    popupImages.forEach(img => {
+                        img.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Zapobiegamy zamknięciu popup przy kliknięciu
+                            const fullImageUrl = this.getAttribute('data-full-img');
+                            showFullscreenImage(fullImageUrl);
+                        });
+                    });
+                });
                 
                 markers.push(marker);
             }
@@ -514,58 +600,61 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Aktualizacja interfejsu dla wylogowanego użytkownika
-function updateUIForLoggedOutUser() {
-    // Aktualizujemy pasek statusu
-    const userStatusElement = document.getElementById('user-status');
-    if (userStatusElement) {
-        userStatusElement.innerHTML = `<span>Nie jesteś zalogowany</span>`;
-    }
-    
-    // Ukrywamy formularz dodawania miejsca
-    const loginRequiredMessage = document.getElementById('login-required-message');
-    if (loginRequiredMessage) {
-        loginRequiredMessage.style.display = 'block';
-    }
-    
-    const addPlaceForm = document.getElementById('add-place-form');
-    if (addPlaceForm) {
-        addPlaceForm.style.display = 'none';
-    }
-    
-    // Resetujemy sekcję logowania
-    const userProfile = document.getElementById('user-profile');
-    if (userProfile) {
-        userProfile.style.display = 'none';
-        userProfile.classList.remove('active');
-    }
-    
-    // Przywracamy widoczność formularzy logowania i rejestracji
-    document.querySelectorAll('.auth-form').forEach(form => {
-        if (form.id !== 'user-profile') {
-            form.style.display = 'block';
-    }
-    form.classList.remove('active');
-    });
-    
-    // Aktywujemy zakładkę logowania i odpowiedni formularz
-    const loginTab = document.querySelector('.auth-tab-btn[data-tab="login-form"]');
-    if (loginTab) {
-        // Ustawiamy aktywną zakładkę
-        document.querySelectorAll('.auth-tab-btn').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        loginTab.classList.add('active');
+    function updateUIForLoggedOutUser() {
+        // Aktualizujemy pasek statusu
+        const userStatusElement = document.getElementById('user-status');
+        if (userStatusElement) {
+            userStatusElement.innerHTML = `<span>Nie jesteś zalogowany</span>`;
+        }
         
-        // Ustawiamy aktywny formularz
-        const loginForm = document.getElementById('login-form');
-        if (loginForm) {
-            loginForm.classList.add('active');
+        // Ukrywamy formularz dodawania miejsca
+        const loginRequiredMessage = document.getElementById('login-required-message');
+        if (loginRequiredMessage) {
+            loginRequiredMessage.style.display = 'block';
+        }
+        
+        const addPlaceForm = document.getElementById('add-place-form');
+        if (addPlaceForm) {
+            addPlaceForm.style.display = 'none';
+        }
+        
+        // Resetujemy sekcję logowania
+        const userProfile = document.getElementById('user-profile');
+        if (userProfile) {
+            userProfile.style.display = 'none';
+            userProfile.classList.remove('active');
+        }
+        
+        // Przywracamy widoczność formularzy logowania i rejestracji
+        document.querySelectorAll('.auth-form').forEach(form => {
+            if (form.id !== 'user-profile') {
+                form.style.display = 'block';
+            }
+            form.classList.remove('active');
+        });
+        
+        // Aktywujemy zakładkę logowania i odpowiedni formularz
+        const loginTab = document.querySelector('.auth-tab-btn[data-tab="login-form"]');
+        if (loginTab) {
+            // Ustawiamy aktywną zakładkę
+            document.querySelectorAll('.auth-tab-btn').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            loginTab.classList.add('active');
+            
+            // Ustawiamy aktywny formularz
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.classList.add('active');
+            }
         }
     }
-}
     
     // Funkcja inicjalizująca wszystko
     function init() {
+        // Tworzenie kontenera dla pełnoekranowego podglądu zdjęć
+        createFullscreenContainer();
+        
         // Inicjalizacja mapy
         initMap();
         

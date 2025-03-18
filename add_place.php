@@ -38,15 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     
     // Handle image uploads if files were submitted
-    $imageFile = '';
+    $uploadedImages = [];
     $uploadErrors = [];
     
     if (isset($_FILES['photos']) && !empty($_FILES['photos']['name'][0])) {
         $uploadResult = handleImageUpload($_FILES['photos']);
         
         if (!empty($uploadResult['files'])) {
-            // For simplicity, we'll just use the first uploaded image
-            $imageFile = $uploadResult['files'][0];
+            $uploadedImages = $uploadResult['files'];
         }
         
         if (!empty($uploadResult['errors'])) {
@@ -55,19 +54,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     
     try {
+        // Start transaction
+        $pdo->beginTransaction();
+        
         // Insert the new place into the database
         $stmt = $pdo->prepare("INSERT INTO zabytki (nazwa, opis, szerokosc, dlugosc, zdjecie, dodane_przez) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $description, $latitude, $longitude, $imageFile, $_SESSION['user_id']]);
         
+        // Set the main image (first one) or empty string if none
+        $mainImage = !empty($uploadedImages) ? $uploadedImages[0] : '';
+        
+        $stmt->execute([$name, $description, $latitude, $longitude, $mainImage, $_SESSION['user_id']]);
         $placeId = $pdo->lastInsertId();
+        
+        // Insert additional images to the images table
+        if (count($uploadedImages) > 0) {
+            $imageStmt = $pdo->prepare("INSERT INTO zdjecia (zabytek_id, sciezka) VALUES (?, ?)");
+            
+            foreach ($uploadedImages as $imagePath) {
+                $imageStmt->execute([$placeId, $imagePath]);
+            }
+        }
+        
+        // Commit transaction
+        $pdo->commit();
         
         echo json_encode([
             'status' => 'success',
             'message' => 'Miejsce zostało dodane pomyślnie',
             'placeId' => $placeId,
-            'uploadWarnings' => $uploadErrors // Include any non-fatal upload errors
+            'uploadWarnings' => $uploadErrors, // Include any non-fatal upload errors
+            'imageCount' => count($uploadedImages)
         ]);
     } catch (PDOException $e) {
+        // Roll back on error
+        $pdo->rollBack();
+        
         echo json_encode([
             'status' => 'error',
             'message' => 'Błąd podczas dodawania miejsca: ' . $e->getMessage()
