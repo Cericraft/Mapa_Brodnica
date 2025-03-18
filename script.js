@@ -158,7 +158,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Ukryj wszystkie formularze
                 document.querySelectorAll('.auth-form').forEach(form => {
-                    form.classList.remove('active');
+                    if (form.id !== 'user-profile') {
+                        form.classList.remove('active');
+                        form.style.display = 'none';
+                    }
                 });
                 
                 // Pokaż docelowy formularz
@@ -166,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const targetForm = document.getElementById(targetFormId);
                 if (targetForm) {
                     targetForm.classList.add('active');
+                    targetForm.style.display = 'block';
                 }
             });
         });
@@ -487,7 +491,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Pokazujemy profil użytkownika w sekcji logowania
         document.querySelectorAll('.auth-form').forEach(form => {
             form.classList.remove('active');
-            form.style.display = 'none';
+            if (form.id !== 'user-profile') { // Dodaj ten warunek
+                form.style.display = 'none';
+            }
         });
         
         const userProfile = document.getElementById('user-profile');
@@ -508,37 +514,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Aktualizacja interfejsu dla wylogowanego użytkownika
-    function updateUIForLoggedOutUser() {
-        // Aktualizujemy pasek statusu
-        const userStatusElement = document.getElementById('user-status');
-        if (userStatusElement) {
-            userStatusElement.innerHTML = `<span>Nie jesteś zalogowany</span>`;
-        }
-        
-        // Ukrywamy formularz dodawania miejsca
-        const loginRequiredMessage = document.getElementById('login-required-message');
-        if (loginRequiredMessage) {
-            loginRequiredMessage.style.display = 'block';
-        }
-        
-        const addPlaceForm = document.getElementById('add-place-form');
-        if (addPlaceForm) {
-            addPlaceForm.style.display = 'none';
-        }
-        
-        // Resetujemy sekcję logowania
-        const userProfile = document.getElementById('user-profile');
-        if (userProfile) {
-            userProfile.style.display = 'none';
-            userProfile.classList.remove('active');
-        }
-        
-        document.querySelectorAll('.auth-form').forEach(form => {
-            form.style.display = 'block';
-        });
-        
-        document.querySelector('.auth-tab-btn[data-tab="login-form"]').click();
+function updateUIForLoggedOutUser() {
+    // Aktualizujemy pasek statusu
+    const userStatusElement = document.getElementById('user-status');
+    if (userStatusElement) {
+        userStatusElement.innerHTML = `<span>Nie jesteś zalogowany</span>`;
     }
+    
+    // Ukrywamy formularz dodawania miejsca
+    const loginRequiredMessage = document.getElementById('login-required-message');
+    if (loginRequiredMessage) {
+        loginRequiredMessage.style.display = 'block';
+    }
+    
+    const addPlaceForm = document.getElementById('add-place-form');
+    if (addPlaceForm) {
+        addPlaceForm.style.display = 'none';
+    }
+    
+    // Resetujemy sekcję logowania
+    const userProfile = document.getElementById('user-profile');
+    if (userProfile) {
+        userProfile.style.display = 'none';
+        userProfile.classList.remove('active');
+    }
+    
+    // Przywracamy widoczność formularzy logowania i rejestracji
+    document.querySelectorAll('.auth-form').forEach(form => {
+        if (form.id !== 'user-profile') {
+            form.style.display = 'block';
+    }
+    form.classList.remove('active');
+    });
+    
+    // Aktywujemy zakładkę logowania i odpowiedni formularz
+    const loginTab = document.querySelector('.auth-tab-btn[data-tab="login-form"]');
+    if (loginTab) {
+        // Ustawiamy aktywną zakładkę
+        document.querySelectorAll('.auth-tab-btn').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        loginTab.classList.add('active');
+        
+        // Ustawiamy aktywny formularz
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.classList.add('active');
+        }
+    }
+}
     
     // Funkcja inicjalizująca wszystko
     function init() {
