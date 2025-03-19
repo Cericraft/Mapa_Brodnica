@@ -245,7 +245,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Ukryj wszystkie formularze
                 document.querySelectorAll('.auth-form').forEach(form => {
                     if (form.id !== 'user-profile') {
-                        form.classList.remove('active');
                         form.style.display = 'none';
                     }
                 });
@@ -560,27 +559,32 @@ document.addEventListener('DOMContentLoaded', function() {
         // Aktualizujemy pasek statusu
         const userStatusElement = document.getElementById('user-status');
         if (userStatusElement) {
-            userStatusElement.innerHTML = `<span>Zalogowano jako: ${email} (Użytkownik)</span>`;
+        userStatusElement.innerHTML = `<span>Zalogowano jako: ${email} (Użytkownik)</span>`;
         }
         
         // Pokazujemy formularz dodawania miejsca
         const loginRequiredMessage = document.getElementById('login-required-message');
         if (loginRequiredMessage) {
-            loginRequiredMessage.style.display = 'none';
+        loginRequiredMessage.style.display = 'none';
         }
         
         const addPlaceForm = document.getElementById('add-place-form');
         if (addPlaceForm) {
-            addPlaceForm.style.display = 'block';
+        addPlaceForm.style.display = 'block';
         }
         
         // Pokazujemy profil użytkownika w sekcji logowania
         document.querySelectorAll('.auth-form').forEach(form => {
             form.classList.remove('active');
-            if (form.id !== 'user-profile') { // Dodaj ten warunek
+            if (form.id !== 'user-profile') {
                 form.style.display = 'none';
             }
         });
+        // Ukrywamy przyciski zakładek logowania/rejestracji
+        const authTabs = document.getElementById('auth-tabs');
+        if (authTabs) {
+        authTabs.style.display = 'none';
+        }
         
         const userProfile = document.getElementById('user-profile');
         if (userProfile) {
@@ -596,8 +600,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (profileEmail) {
                 profileEmail.textContent = email;
             }
-        }
     }
+}
     
     // Aktualizacja interfejsu dla wylogowanego użytkownika
     function updateUIForLoggedOutUser() {
@@ -624,6 +628,11 @@ document.addEventListener('DOMContentLoaded', function() {
             userProfile.style.display = 'none';
             userProfile.classList.remove('active');
         }
+        // Pokazujemy z powrotem przyciski zakładek logowania/rejestracji
+        const authTabs = document.getElementById('auth-tabs');
+        if (authTabs) {
+            authTabs.style.display = 'block';
+        }
         
         // Przywracamy widoczność formularzy logowania i rejestracji
         document.querySelectorAll('.auth-form').forEach(form => {
@@ -649,6 +658,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+    // Aktywacja domyślnej zakładki przy starcie
+    function activateDefaultLoginTab() {
+        // Ukryj wszystkie formularze
+    document.querySelectorAll('.auth-form').forEach(form => {
+        if (form.id !== 'user-profile') {
+            form.style.display = 'none';
+        }
+    });
+
+        // Pobierz pierwszą zakładkę (prawdopodobnie logowanie)
+        const defaultLoginTab = document.querySelector('.auth-tab-btn');
+        if (defaultLoginTab) {
+            defaultLoginTab.click(); // Symulujemy kliknięcie
+            // Dodatkowo pokaż formularz związany z domyślną zakładką
+        const targetFormId = defaultLoginTab.getAttribute('data-tab');
+        const targetForm = document.getElementById(targetFormId);
+        if (targetForm) {
+            targetForm.style.display = 'block';
+        }
+    }
+
+    }
+
     
     // Funkcja inicjalizująca wszystko
     function init() {
@@ -681,7 +713,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Sprawdzanie stanu sesji użytkownika
         checkSession();
-    }
+
+        // Wywołaj funkcję aktywującą domyślną zakładkę
+        activateDefaultLoginTab();
+        }
     
     // Wywołanie funkcji inicjalizującej
     init();
